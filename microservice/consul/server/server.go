@@ -7,7 +7,6 @@ import (
 	"net"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/prometheus/client_golang/api"
 	"google.golang.org/grpc"
 )
 
@@ -25,29 +24,28 @@ func main() {
 	consulConfig := api.DefaultConfig()
 
 	// 2. 创建consul 对象
-	consuClient, err := api.NewClient(consulConfig)
+	consulClient, err := api.NewClient(consulConfig)
 	if err != nil {
 		fmt.Println("Client failed: ", err)
 	}
 
 	// 3. 告诉consul即将注册的服务信息
-	registerService := api.AgentServiceRegistration(
-		ID: "server-1",
-		Tags: []string{"grpc-hello", "consul-hello"},
-		Name: "grpc and consul",
+	registerService := api.AgentServiceRegistration{
+		ID:      "server-1",
+		Tags:    []string{"grpc-hello", "consul-hello"},
+		Name:    "grpc and consul",
 		Address: "127.0.0.1",
-		Port: "8800",
+		Port:    8800,
 		Check: &api.AgentServiceCheck{
-			CheckID: "consul hello check",
-			TCP: "127.0.0.1:8800",
-			Timeout: "1s",
+			CheckID:  "consul hello check",
+			TCP:      "127.0.0.1:8800",
+			Timeout:  "1s",
 			Interval: "5s",
 		},
-	)
+	}
 
 	// 4. 注册grpc服务到consul上
-	consulConfig.Agent().ServiceRegister(&registerService)
-
+	consulClient.Agent().ServiceRegister(&registerService)
 
 	// grpc服务
 	grpcServer := grpc.NewServer()
@@ -59,5 +57,7 @@ func main() {
 		return
 	}
 
+	fmt.Println("服务启动。。。")
 	grpcServer.Serve(lintener)
+
 }

@@ -21,6 +21,10 @@
 go.work
 go.work.sum
 
+# Go module file
+go.mod
+go.sum
+
 # env file
 .env
 

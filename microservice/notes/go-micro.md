@@ -35,3 +35,67 @@
 2. 健康检查: 定时发送消息，类似于"心跳包"
 3. 键值存储: consul提供，但是一般用redis
 4. 多数据中心: 可以轻松搭建集群
+
+### 注册服务到consul
+
+步骤：
+1. 创建/etc/consul.d
+2. 创建服务文件/etc/consul.d/web.json
+  ```json
+  {
+        "service":{
+            "name": "Faceid",
+            "tags": ["rails", "subway"],
+            "port": 8800
+        }
+  }
+  ```
+3. 重新启动
+4. 查询服务
+   1. 浏览器: IP:8500
+   2. 命令行查询: `curl -s https://127.0.0.1:8500/v1/catalog/service/Faceid`
+
+### 健康检查
+
+1. 配置文件中加入
+```json
+{
+    "service":{
+    "name": "Faceid",
+    "tags": ["rails", "subway"],
+    "port": 8800,
+    "check": {
+        "id": "api",
+        "name": "HTTP API on port 8800",
+        "http": "http://10.8.56.240:8800",
+        "interval": "10s",
+        "timeout": "1s"
+    }
+  }
+}
+```
+2. 执行consul reload重新加载配置文件或者重启
+3. 会显示不健康
+   1. 因为当前没有注册好的服务
+4. 健康检查方式："script"、'"tcp"、"ttl"
+
+## consul与grpc结合
+
+安装consul 源码包：
+
+```shell
+go get -u -v github.com/hashicorp/consul
+```
+
+### 使用整体流程
+
+1. 创建proto文件，指定rpc服务
+2. 启动Consul服务发现
+3. 启动server
+   1. 获取consul对象
+   2. 使用consul对象，将server信息注册给consul
+   3. 启动Consul服务发现
+4. 启动client
+   1. 获取consul对象
+   2. 使用consul对象，从consul上获取健康的服务
+   3. 再访问服务（grpc远程调用）
